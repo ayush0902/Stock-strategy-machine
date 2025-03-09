@@ -1,0 +1,110 @@
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from mplfinance.original_flavor import candlestick_ohlc
+import matplotlib.dates as mdates
+
+# Step 1: Fetch financial data of F&O stocks in NSE
+def fetch_fo_stocks():
+    # For demonstration purposes, we use a predefined list of F&O stocks
+    fo_stocks = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'ICICIBANK.NS']
+    return fo_stocks
+
+# Step 2: Filter stocks with today's trading volume greater than past 10 days' EMA volume
+def filter_by_volume(stocks):
+    filtered_stocks = []
+    for stock in stocks:
+        data = yf.download(stock, period="15d", interval="1d")
+        if len(data) < 11:
+            continue
+        data['EMA_10'] = data['Volume'].ewm(span=10, adjust=False).mean()
+        if data['Volume'].iloc[-1] > data['EMA_10'].iloc[-2]:
+            filtered_stocks.append(stock)
+    return filtered_stocks
+
+# Step 3: Filter stocks by candlestick patterns
+def identify_patterns(data):
+    patterns = {
+        'marubozu': lambda x: (x['Open'] == x['Low'] and x['Close'] == x['High']),
+        'doji': lambda x: (abs(x['Open'] - x['Close']) < 0.1 * (x['High'] - x['Low'])),
+        'spinning_top': lambda x: (abs(x['Open'] - x['Close']) < 0.3 * (x['High'] - x['Low'])),
+        'hammer': lambda x: ((x['High'] - x['Close']) / (x['High'] - x['Low']) > 0.6) and ((x['Open'] - x['Low']) / (x['High'] - x['Low']) > 0.6),
+        'bullish_engulfing': lambda x: (x['Close'] > x['Open'] and x['Close'].shift(1) < x['Open'].shift(1) and x['Close'] > x['Open'].shift(1) and x['Open'] < x['Close'].shift(1)),
+        'bullish_harami': lambda x: (x['Close'] > x['Open'] and x['Close'].shift(1) < x['Open'].shift(1) and x['Open'] > x['Close'].shift(1) and x['Close'] < x['Open'].shift(1)),
+        'morning_star': lambda x: (x['Close'].shift(2) < x['Open'].shift(2) and x['Close'].shift(1) < x['Open'].shift(1) and x['Open'] > x['Close'].shift(1) and x['Close'] > x['Open'].shift(2)),
+    }
+    for pattern, condition in patterns.items():
+        if condition(data.iloc[-1]):
+            return True
+    return False
+
+def filter_by_patterns(stocks):
+    filtered_stocks = []
+    for stock in stocks:
+        data = yf.download(stock, period="60d", interval="1d")
+        if identify_patterns(data):
+            filtered_stocks.append(stock)
+    return filtered_stocks
+
+# Step 4: Plot past 52 days of Japanese candlestick chart with resistance and support
+def plot_candlestick_chart(stocks):
+    for stock in stocks:
+        data = yf.download(stock, period="60d", interval="1d")
+        data = data[-52:]
+        data['Date'] = data.index.map(mdates.date2num)
+        ohlc = data[['Date', 'Open', 'High', 'Low', 'Close']].copy()
+        
+        fig, ax = plt.subplots()
+        candlestick_ohlc(ax, ohlc.values, width=0.6, colorup='g', colordown='r', alpha=0.8)
+        
+        ax.xaxis_date()
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+        plt.xticks(rotation=45)
+        plt.title(f'Candlestick chart for {stock}')
+        plt.xlabel('Date')
+        plt.ylabel('Price')
+        
+        # Calculate and plot resistance and support levels
+        pivots = []
+        dates = []
+        counter = 0
+        lastPivot = 0
+        
+        for i in data.index:
+            if counter < 10:
+                pivots.append(0)
+                dates.append(0)
+                counter += 1
+            else:
+                high_range = data['High'][counter-10:counter]
+                current_max = high_range.max()
+                low_range = data['Low'][counter-10:counter]
+                current_min = low_range.min()
+                pivot = (current_max + current_min) / 2
+                pivots.append(pivot)
+                dates.append(data['Date'][counter])
+                lastPivot = pivot
+                counter += 1
+        
+        for i in range(len(pivots)):
+            if pivots[i] != 0:
+                plt.plot_date([dates[i], dates[i+1]], [pivots[i], pivots[i+1]], '-', linewidth=1.5, color='blue')
+        
+        plt.show()
+
+# Main function to run the analysis
+def main():
+    fo_stocks = fetch_fo_stocks()
+    print("Step 1: F&O Stocks fetched:", fo_stocks)
+    
+    volume_filtered_stocks = filter_by_volume(fo_stocks)
+    print("Step 2: Stocks filtered by volume:", volume_filtered_stocks)
+    
+    pattern_filtered_stocks = filter_by_patterns(volume_filtered_stocks)
+    print("Step 3: Stocks filtered by candlestick patterns:", pattern_filtered_stocks)
+    
+    plot_candlestick_chart(pattern_filtered_stocks)
+
+if __name__ == "__main__":
+    main()
