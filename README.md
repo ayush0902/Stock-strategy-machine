@@ -19,9 +19,6 @@ The following Python libraries are required to run this script:
 4. matplotlib (for plotting charts)
 5. mplfinance (for candlestick charts)
 
-You can install them using:
-
-pip install yfinance pandas numpy matplotlib mplfinance
 
 How It Works
 
