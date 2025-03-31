@@ -2,7 +2,7 @@ Stock Analysis Using Candlestick Patterns and Volume Filtering
 
 Overview
 
-This script analyzes NSE (National Stock Exchange) F&O stocks by filtering stocks based on trading volume and candlestick patterns. It then plots Japanese candlestick charts with support and resistance levels to help traders identify potential trade opportunities.
+This script analyzes NSE (National Stock Exchange) F&O stocks by filtering stocks based on trading volume and candlestick patterns. It then plots Japanese candlestick charts with support and resistance levels to help identify potential trade opportunities.
 
 Features
 1. Fetches a predefined list of NSE F&O stocks.
@@ -39,11 +39,6 @@ Step 4: Plot Candlestick Chart with Support & Resistance
 2. Calculates support and resistance levels based on the highest and lowest prices in the last 10 days.
 3. Draws support and resistance lines on the chart.
 
-Usage
-
-To run the script, simply execute:
-
-python script.py
 
 The output will show:
 1. Filtered stocks based on volume and candlestick patterns.
@@ -60,6 +55,5 @@ Step 3: Stocks filtered by candlestick patterns: ["RELIANCE.NS"]
 2. A candlestick chart for “RELIANCE.NS” with support and resistance levels plotted.
 
 Notes
-1. The F&O stock list is predefined; you can modify it as needed.
-2. The script does not make buy/sell recommendations but helps in technical analysis.
-3. Ensure that Yahoo Finance is accessible, as it fetches real-time stock data from there.
+1. The script does not make buy/sell recommendations but helps in technical analysis.
+2. Ensure that Yahoo Finance is accessible, as it fetches real-time stock data from there.
